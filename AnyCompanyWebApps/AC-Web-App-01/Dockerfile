@@ -5,4 +5,4 @@ FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019
 WORKDIR /inetpub/wwwroot
 
 WORKDIR /inetpub/wwwroot
-COPY ./ReleaseBuild/_PublishedWebsites/AnyCompanyWebApps ./
+COPY ./ ./
