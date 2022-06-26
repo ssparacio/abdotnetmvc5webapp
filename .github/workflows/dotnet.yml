@@ -27,7 +27,7 @@ jobs:
             - name: Restore Nuget Packages
               id: nuget-restore
               run: |
-                  nuget restore -ConfigFile ./FABICash/NuGet.config
+                  nuget restore
             - name: Build for Release!
               id: build_app_release
               working-directory: ./AnyCompanyWebApps
