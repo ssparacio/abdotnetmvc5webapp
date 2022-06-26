@@ -50,7 +50,7 @@ jobs:
               run: docker pull mcr.microsoft.com/dotnet/framework/runtime:4.8
 
             - name: Build, tag, and push image to Amazon ECR
-              working-directory: ./AnyCompanyWebApps
+              working-directory: ./AnyCompanyWebApps/AC-Web-App-01
               id: build-image
               shell: bash
               env:
@@ -60,7 +60,7 @@ jobs:
               run: |
                   echo $ECR_REGISTRY $ECR_REPOSITORY $IMAGE_TAG
                   echo $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-                  docker build -t $ECR_REPOSITORY ./ReleaseBuild/_PublishedWebsites/AnyCompanyWebApps --file ./Dockerfile --no-cache
+                  docker build -t $ECR_REPOSITORY ./ReleaseBuild/_PublishedWebsites/AC-Web-App-01 --file ./Dockerfile --no-cache
                   docker tag $ECR_REPOSITORY $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                   docker tag $ECR_REPOSITORY $ECR_REGISTRY/$ECR_REPOSITORY:sha-${{ github.sha }}
                   docker tag $ECR_REPOSITORY $ECR_REGISTRY/$ECR_REPOSITORY:branch-${{ steps.extract_branch.outputs.branch }}
