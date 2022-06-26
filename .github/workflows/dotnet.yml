@@ -1,0 +1,89 @@
+name: Build App, Build Container and Publish Container
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+    build-app:
+        name: Server build
+        runs-on: [self-hosted, aws-ab3]
+
+        steps:
+            - name: Extract branch name
+              shell: bash
+              run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+              id: extract_branch
+
+            - name: Show me the VARS!
+              id: echo-the-env-vars
+              shell: bash
+              run: |
+                  echo ${{ steps.extract_branch.outputs.branch }}
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Restore Nuget Packages
+              id: nuget-restore
+              run: |
+                  nuget restore -ConfigFile ./FABICash/NuGet.config
+            - name: Build for Release!
+              id: build_app_release
+              working-directory: ./AnyCompanyWebApps
+              run: |
+                  msbuild /p:Configuration=Release /p:OutDir=./ReleaseBuild
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.ACTIONS_AWS_AB3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.ACTIONS_AWS_AB3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-2
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v1
+
+            - name: Pull Latest Runtime Server
+              id: pull-runtime
+              run: docker pull mcr.microsoft.com/dotnet/framework/runtime:4.8
+
+            - name: Build, tag, and push image to Amazon ECR
+              working-directory: ./AnyCompanyWebApps
+              id: build-image
+              shell: bash
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  ECR_REPOSITORY: net-fabicash
+                  IMAGE_TAG: ${{ steps.extract_branch.outputs.branch }}
+              run: |
+                  echo $ECR_REGISTRY $ECR_REPOSITORY $IMAGE_TAG
+                  echo $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                  docker build -t $ECR_REPOSITORY ./ReleaseBuild/_PublishedWebsites/AnyCompanyWebApps --file ./Dockerfile --no-cache
+                  docker tag $ECR_REPOSITORY $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                  docker tag $ECR_REPOSITORY $ECR_REGISTRY/$ECR_REPOSITORY:sha-${{ github.sha }}
+                  docker tag $ECR_REPOSITORY $ECR_REGISTRY/$ECR_REPOSITORY:branch-${{ steps.extract_branch.outputs.branch }}
+                  docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#             - name: Update Service - Branch (will fail if branch does not have a service setup.)
+#               id: ecs-update-service-branch
+#               if: github.ref != 'refs/heads/master' && github.event_name == 'push'
+#               continue-on-error: true
+#               env:
+#                   aws-access-key-id: ${{ secrets.ACTIONS_AWS_AB3_ACCESS_KEY_ID }}
+#                   aws-secret-access-key: ${{ secrets.ACTIONS_AWS_AB3_SECRET_ACCESS_KEY }}
+#                   aws-region: us-east-2
+#               run: |
+#                   ecs deploy FABIApps net-fabicash-${{ steps.extract_branch.outputs.branch }}-stack --timeout -1
+#             - name: Update Service - Master (will fail if branch does not have a service setup.)
+#               id: ecs-update-service-master
+#               if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+#               continue-on-error: true
+#               env:
+#                   aws-access-key-id: ${{ secrets.ACTIONS_AWS_AB3_ACCESS_KEY_ID }}
+#                   aws-secret-access-key: ${{ secrets.ACTIONS_AWS_AB3_SECRET_ACCESS_KEY }}
+#                   aws-region: us-east-2
+#               run: |
+#                   ecs deploy FABIApps net-fabicash-app-stack --timeout -1
+            - name: Logout of Amazon ECR
+              if: always()
+              run: docker logout ${{ steps.login-ecr.outputs.registry }}
