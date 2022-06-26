@@ -39,7 +39,7 @@ jobs:
               with:
                   aws-access-key-id: ${{ secrets.ACTIONS_AWS_AB3_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.ACTIONS_AWS_AB3_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-2
+                  aws-region: us-east-1
 
             - name: Login to Amazon ECR
               id: login-ecr
@@ -72,7 +72,7 @@ jobs:
 #               env:
 #                   aws-access-key-id: ${{ secrets.ACTIONS_AWS_AB3_ACCESS_KEY_ID }}
 #                   aws-secret-access-key: ${{ secrets.ACTIONS_AWS_AB3_SECRET_ACCESS_KEY }}
-#                   aws-region: us-east-2
+#                   aws-region: us-east-1
 #               run: |
 #                   ecs deploy FABIApps net-fabicash-${{ steps.extract_branch.outputs.branch }}-stack --timeout -1
 #             - name: Update Service - Master (will fail if branch does not have a service setup.)
@@ -82,7 +82,7 @@ jobs:
 #               env:
 #                   aws-access-key-id: ${{ secrets.ACTIONS_AWS_AB3_ACCESS_KEY_ID }}
 #                   aws-secret-access-key: ${{ secrets.ACTIONS_AWS_AB3_SECRET_ACCESS_KEY }}
-#                   aws-region: us-east-2
+#                   aws-region: us-east-1
 #               run: |
 #                   ecs deploy FABIApps net-fabicash-app-stack --timeout -1
             - name: Logout of Amazon ECR
