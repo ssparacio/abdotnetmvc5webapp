@@ -55,7 +55,7 @@ jobs:
               shell: bash
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  ECR_REPOSITORY: ab3-anycompany
+                  ECR_REPOSITORY: ab-3
                   IMAGE_TAG: ${{ steps.extract_branch.outputs.branch }}
               run: |
                   echo $ECR_REGISTRY $ECR_REPOSITORY $IMAGE_TAG
